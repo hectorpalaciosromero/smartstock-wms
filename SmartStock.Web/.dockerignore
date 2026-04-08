@@ -1,0 +1,14 @@
+node_modules/
+dist/
+build/
+.env
+.env.local
+.env.*.local
+npm-debug.log*
+.git
+.gitignore
+README.md
+Dockerfile
+.dockerignore
+build_error.log
+*.log

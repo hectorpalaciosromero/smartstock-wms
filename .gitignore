@@ -93,3 +93,10 @@ Desktop.ini
 # Logs generales
 *.log
 coverage/
+
+# ===========================
+# Docker
+# ===========================
+.env.docker
+docker-compose.override.yml
+compose.override.yml

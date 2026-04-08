@@ -1,0 +1,67 @@
+# SmartStock Dev Environment
+services:
+
+  # Database
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: smartstock-db
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${SA_PASSWORD:-SmartStock2026!}"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "SELECT 1" -b || /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -Q "SELECT 1" -b || exit 1
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+    restart: unless-stopped
+
+  # .NET 8 Backend API
+
+  api:
+    build:
+      context: ./SmartStock.API
+      dockerfile: Dockerfile
+    container_name: smartstock-api
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=SmartStockDB;User Id=sa;Password=${SA_PASSWORD:-SmartStock2026!};TrustServerCertificate=True;"
+      Jwt__Key: "${JWT_KEY:-SmartStock_Docker_JWT_Key_2026_SuperSecure_64chars!!}"
+      Jwt__Issuer: "SmartStock.API"
+      Jwt__Audience: "SmartStock.Client"
+      Jwt__ExpirationHours: "4"
+      AdminSeed__Email: "admin@smartstock.pe"
+      AdminSeed__DefaultPassword: "Admin123!"
+      ASPNETCORE_ENVIRONMENT: "Development"
+    ports:
+      - "5000:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # React 19 SPA via Nginx
+
+  web:
+    build:
+      context: ./SmartStock.Web
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: "http://localhost:5000/api"
+        VITE_CLOUDINARY_CLOUD_NAME: "${CLOUDINARY_CLOUD_NAME:-}"
+        VITE_CLOUDINARY_UPLOAD_PRESET: "${CLOUDINARY_UPLOAD_PRESET:-}"
+    container_name: smartstock-web
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  sqlserver_data:
+    driver: local

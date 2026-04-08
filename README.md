@@ -21,6 +21,7 @@
     <img src="https://img.shields.io/badge/Vite_8-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
     <img src="https://img.shields.io/badge/TensorFlow.js-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white" alt="TensorFlow.js" />
     <img src="https://img.shields.io/badge/Cloudinary-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white" alt="Cloudinary" />
+    <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
   </p>
 
   <p>
@@ -217,7 +218,8 @@ Los endpoints `/api/Auth/login` y `/api/Auth/register` están protegidos con **F
 ## 📁 Estructura del Monorepo
 
 ```text
-DMS/                                  ← Raíz del repositorio (solución .NET)
+smartstock-wms/                       ← Raíz del repositorio (monorepo)
+├── compose.yml                       ← 🐳 Docker Compose V2 (3 servicios)
 ├── SmartStock.sln                    ← Solución Visual Studio
 │
 ├── SmartStock.API/                   ← 🟣 Backend REST API (.NET 8)
@@ -240,7 +242,8 @@ DMS/                                  ← Raíz del repositorio (solución .NET)
 │   │   └── GlobalExceptionMiddleware.cs
 │   ├── Migrations/                   ← Code-First migrations
 │   ├── Program.cs                    ← Composición DI + middleware pipeline
-│   └── appsettings.json              ← Configuración base
+│   ├── appsettings.json              ← Configuración base
+│   └── Dockerfile                    ← 🐳 Multi-stage build (.NET 8)
 │
 └── SmartStock.Web/                   ← 🔵 Frontend SPA (React 19 + Vite 8)
     ├── src/
@@ -272,7 +275,9 @@ DMS/                                  ← Raíz del repositorio (solución .NET)
     ├── public/
     │   └── favicon.svg               ← Logo "H" de SmartStock
     ├── .env.example                  ← Plantilla de variables de entorno
-    └── vite.config.js                ← Configuración Vite
+    ├── vite.config.js                ← Configuración Vite
+    ├── nginx.conf                    ← 🐳 Configuración Nginx para SPA
+    └── Dockerfile                    ← 🐳 Multi-stage build (Node → Nginx)
 ```
 
 ---
@@ -308,6 +313,14 @@ DMS/                                  ← Raíz del repositorio (solución .NET)
 | Recharts | **3.8.1** | Gráficas analíticas (área, barras, pie) |
 | Lucide React | **1.7.0** | Sistema de iconos SVG |
 | Cloudinary | (CDN) | Almacenamiento y entrega de imágenes |
+
+### DevOps & Infraestructura
+
+| Tecnología | Versión | Propósito |
+|---|---|---|
+| Docker | **Compose V2** | Contenedorización multi-servicio |
+| Nginx | **Alpine** | Reverse proxy + servidor de estáticos |
+| SQL Server | **2022** | Motor de base de datos en contenedor |
 
 ---
 
@@ -430,7 +443,36 @@ erDiagram
 
 ## 💻 Instalación y Configuración
 
-### Prerrequisitos
+### 🐳 Inicio rápido con Docker
+
+> La forma más rápida de ejecutar el sistema completo. **No requiere instalar** .NET, Node.js ni SQL Server.
+
+**Prerrequisito:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado.
+
+```bash
+git clone https://github.com/hectorpalaciosromero/smartstock-wms.git
+cd smartstock-wms
+docker compose up --build
+```
+
+| Servicio | URL | Descripción |
+|---|---|---|
+| 🖥️ Frontend | `http://localhost:3000` | Aplicación React 19 |
+| ⚙️ API | `http://localhost:5000/api` | REST API .NET 8 |
+| 📖 Swagger | `http://localhost:5000/swagger` | Documentación interactiva |
+| 🗄️ SQL Server | `localhost:1433` | Base de datos (sa / SmartStock2026!) |
+
+> ✅ El sistema crea automáticamente la base de datos, aplica migraciones y genera el usuario administrador:
+> **Email:** `admin@smartstock.pe` · **Password:** `Admin123!`
+
+Para detener todos los servicios:
+```bash
+docker compose down
+```
+
+---
+
+### Prerrequisitos (Instalación Manual)
 
 - [**.NET 8 SDK**](https://dotnet.microsoft.com/download/dotnet/8.0) — Runtime del servidor
 - [**SQL Server**](https://www.microsoft.com/sql-server) — Base de datos (LocalDB / Express / Full)
